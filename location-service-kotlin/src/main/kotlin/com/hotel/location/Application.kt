@@ -1,5 +1,6 @@
 package com.hotel.location
 
+import com.hotel.location.dto.GeofenceErrorLog
 import com.hotel.location.dto.HealthResponse
 import com.hotel.location.dto.LocationEventRequestDto
 import com.hotel.location.dto.ProblemDetailsResponse
@@ -65,7 +66,19 @@ fun Application.module() {
     install(StatusPages) {
         exception<LocationValidationException> { call, cause ->
             val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
-            logger.warn("Falha de validação [correlation_id='{}', rota='{}']: campo='{}', mensagem='{}'", correlationId, call.request.path(), cause.field, cause.message)
+            val errorLog = GeofenceErrorLog(
+                timestamp = java.time.Instant.now().toString(),
+                level = "WARN",
+                correlation_id = correlationId,
+                event = "GEOFENCE_VALIDATION_FAILED",
+                error_type = cause.typeUri,
+                status_code = cause.statusCode.value,
+                path = call.request.path(),
+                message = cause.message,
+                field = cause.field,
+                code = cause.errorCode.name
+            )
+            logger.warn(Json.encodeToString(errorLog))
             call.respond(
                 cause.statusCode,
                 ProblemDetailsResponse(
@@ -73,20 +86,33 @@ fun Application.module() {
                     title = cause.title,
                     status = cause.statusCode.value,
                     detail = cause.message,
-                    instance = call.request.path()
+                    instance = call.request.path(),
+                    code = cause.errorCode.name
                 )
             )
         }
 
         exception<SerializationException> { call, cause ->
             val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
-            logger.warn("Erro de desserialização JSON [correlation_id='{}', rota='{}']: {}", correlationId, call.request.path(), cause.message, cause)
             val field = extractFieldFromSerializationMessage(cause.message)
             val detail = if (field != null) {
                 "O campo '$field' contém dados inválidos ou incompatíveis."
             } else {
                 "O payload enviado é um JSON malformado ou incompatível."
             }
+            val errorLog = GeofenceErrorLog(
+                timestamp = java.time.Instant.now().toString(),
+                level = "WARN",
+                correlation_id = correlationId,
+                event = "MALFORMED_JSON_ERROR",
+                error_type = "urn:problem-type:malformed-json",
+                status_code = HttpStatusCode.BadRequest.value,
+                path = call.request.path(),
+                message = detail,
+                field = field,
+                code = "MALFORMED_JSON"
+            )
+            logger.warn(Json.encodeToString(errorLog))
             call.respond(
                 HttpStatusCode.BadRequest,
                 ProblemDetailsResponse(
@@ -94,14 +120,14 @@ fun Application.module() {
                     title = "Malformed JSON Request",
                     status = HttpStatusCode.BadRequest.value,
                     detail = detail,
-                    instance = call.request.path()
+                    instance = call.request.path(),
+                    code = "MALFORMED_JSON"
                 )
             )
         }
 
         exception<BadRequestException> { call, cause ->
             val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
-            logger.warn("Requisição inválida [correlation_id='{}', rota='{}']: {}", correlationId, call.request.path(), cause.message, cause)
             val isSerialization = cause.cause is SerializationException ||
                 cause.cause?.cause is SerializationException ||
                 cause.message?.contains("convert", ignoreCase = true) == true ||
@@ -111,6 +137,7 @@ fun Application.module() {
 
             val typeUri = if (isSerialization) "urn:problem-type:malformed-json" else "urn:problem-type:bad-request"
             val title = if (isSerialization) "Malformed JSON Request" else "Bad Request"
+            val code = if (isSerialization) "MALFORMED_JSON" else "BAD_REQUEST"
 
             val field = extractFieldFromSerializationMessage(cause.cause?.message ?: cause.message)
             val detail = if (field != null) {
@@ -121,6 +148,19 @@ fun Application.module() {
                 "Requisição inválida."
             }
 
+            val errorLog = GeofenceErrorLog(
+                timestamp = java.time.Instant.now().toString(),
+                level = "WARN",
+                correlation_id = correlationId,
+                event = if (isSerialization) "MALFORMED_JSON_ERROR" else "BAD_REQUEST_ERROR",
+                error_type = typeUri,
+                status_code = HttpStatusCode.BadRequest.value,
+                path = call.request.path(),
+                message = detail,
+                field = field,
+                code = code
+            )
+            logger.warn(Json.encodeToString(errorLog))
             call.respond(
                 HttpStatusCode.BadRequest,
                 ProblemDetailsResponse(
@@ -128,14 +168,27 @@ fun Application.module() {
                     title = title,
                     status = HttpStatusCode.BadRequest.value,
                     detail = detail,
-                    instance = call.request.path()
+                    instance = call.request.path(),
+                    code = code
                 )
             )
         }
 
         exception<ServiceUnavailableException> { call, cause ->
             val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
-            logger.error("Serviço de localização indisponível [correlation_id='{}', rota='{}']: {}", correlationId, call.request.path(), cause.message)
+            val errorLog = GeofenceErrorLog(
+                timestamp = java.time.Instant.now().toString(),
+                level = "ERROR",
+                correlation_id = correlationId,
+                event = "GEOFENCE_SERVICE_UNAVAILABLE",
+                error_type = cause.typeUri,
+                status_code = cause.statusCode.value,
+                path = call.request.path(),
+                message = cause.message,
+                field = cause.field,
+                code = cause.errorCode.name
+            )
+            logger.error(Json.encodeToString(errorLog))
             call.respond(
                 HttpStatusCode.ServiceUnavailable,
                 ProblemDetailsResponse(
@@ -143,14 +196,26 @@ fun Application.module() {
                     title = cause.title,
                     status = HttpStatusCode.ServiceUnavailable.value,
                     detail = cause.message,
-                    instance = call.request.path()
+                    instance = call.request.path(),
+                    code = cause.errorCode.name
                 )
             )
         }
 
         exception<Throwable> { call, cause ->
             val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
-            logger.error("Erro interno inesperado no servidor [correlation_id='{}', rota='{}']: {}", correlationId, call.request.path(), cause.message, cause)
+            val errorLog = GeofenceErrorLog(
+                timestamp = java.time.Instant.now().toString(),
+                level = "ERROR",
+                correlation_id = correlationId,
+                event = "INTERNAL_SERVER_ERROR",
+                error_type = "urn:problem-type:internal-server-error",
+                status_code = HttpStatusCode.InternalServerError.value,
+                path = call.request.path(),
+                message = cause.message ?: "Erro interno inesperado no servidor.",
+                code = "INTERNAL_SERVER_ERROR"
+            )
+            logger.error(Json.encodeToString(errorLog))
             call.respond(
                 HttpStatusCode.InternalServerError,
                 ProblemDetailsResponse(
@@ -158,7 +223,8 @@ fun Application.module() {
                     title = "Internal Server Error",
                     status = HttpStatusCode.InternalServerError.value,
                     detail = "Erro interno inesperado no servidor.",
-                    instance = call.request.path()
+                    instance = call.request.path(),
+                    code = "INTERNAL_SERVER_ERROR"
                 )
             )
         }
