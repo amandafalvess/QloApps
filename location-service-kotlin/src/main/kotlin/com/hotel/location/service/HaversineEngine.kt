@@ -31,7 +31,7 @@ object HaversineEngine {
         val distance = calculateDistanceMeters(event.hotelLocation, event.guestLocation)
         val roundedDistance = (distance * 10.0).roundToInt() / 10.0
 
-        val currentState = if (distance <= event.geofenceRadiusMeters) {
+        val currentState = if (roundedDistance <= event.geofenceRadiusMeters) {
             GeofenceState.INSIDE
         } else {
             GeofenceState.OUTSIDE

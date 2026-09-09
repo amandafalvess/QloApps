@@ -14,6 +14,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlin.math.roundToInt
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -315,12 +316,13 @@ class HaversineEngineTest {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val guestCoords = Coordinates(-8.053100, -34.886100)
             val calculatedDistance = HaversineEngine.calculateDistanceMeters(hotelCoords, guestCoords)
+            val exactRadius = (calculatedDistance * 10.0).roundToInt() / 10.0
 
             val eventInside = LocationEvent(
                 hotelId = "htl-01",
                 hotelLocation = hotelCoords,
                 guestLocation = guestCoords,
-                geofenceRadiusMeters = calculatedDistance,
+                geofenceRadiusMeters = exactRadius,
                 previousState = GeofenceState.INSIDE
             )
             val resultInside = HaversineEngine.evaluate(eventInside, "test-corr-exact-radius-inside")
@@ -332,13 +334,35 @@ class HaversineEngineTest {
                 hotelId = "htl-01",
                 hotelLocation = hotelCoords,
                 guestLocation = guestCoords,
-                geofenceRadiusMeters = calculatedDistance,
+                geofenceRadiusMeters = exactRadius,
                 previousState = GeofenceState.OUTSIDE
             )
             val resultOutside = HaversineEngine.evaluate(eventOutside, "test-corr-exact-radius-outside")
             assertEquals(GeofenceState.INSIDE, resultOutside.currentState)
             assertEquals(GeofenceTransition.ENTERED, resultOutside.transition)
             assertTrue(resultOutside.alertTriggered)
+        }
+
+        @Test
+        fun `should evaluate currentState consistently with rounded distance on boundary`() {
+            val hotelCoords = Coordinates(-8.052240, -34.885650)
+            val guestCoords = Coordinates(-8.053100, -34.886100)
+            val unroundedDistance = HaversineEngine.calculateDistanceMeters(hotelCoords, guestCoords)
+            val roundedDistance = (unroundedDistance * 10.0).roundToInt() / 10.0
+
+            val event = LocationEvent(
+                hotelId = "htl-01",
+                hotelLocation = hotelCoords,
+                guestLocation = guestCoords,
+                geofenceRadiusMeters = roundedDistance,
+                previousState = GeofenceState.OUTSIDE
+            )
+
+            val result = HaversineEngine.evaluate(event, "test-corr-boundary")
+            assertEquals(roundedDistance, result.distanceMeters)
+            assertEquals(GeofenceState.INSIDE, result.currentState)
+            assertEquals(GeofenceTransition.ENTERED, result.transition)
+            assertTrue(result.alertTriggered)
         }
     }
 
