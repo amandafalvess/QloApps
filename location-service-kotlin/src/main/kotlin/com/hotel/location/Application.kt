@@ -35,9 +35,9 @@ fun main() {
 
 private val logger = LoggerFactory.getLogger("com.hotel.location.Application")
 
-private val UUID_REGEX = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+private val UUID_V4_REGEX = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$")
 
-fun isValidUuid(value: String): Boolean = UUID_REGEX.matches(value.trim())
+fun isValidUuid(value: String): Boolean = UUID_V4_REGEX.matches(value.trim())
 
 var isServiceAvailable: Boolean = true
 
