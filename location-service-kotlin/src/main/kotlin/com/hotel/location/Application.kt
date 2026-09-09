@@ -39,6 +39,7 @@ private val UUID_V4_REGEX = Regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3
 
 fun isValidUuid(value: String): Boolean = UUID_V4_REGEX.matches(value.trim())
 
+@Volatile
 var isServiceAvailable: Boolean = true
 
 fun resetServiceState() {
