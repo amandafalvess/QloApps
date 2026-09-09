@@ -58,6 +58,18 @@ class HaversineEngineTest {
 
             assertEquals(0.0, distance, 0.001, "A distância entre pontos idênticos deve ser 0.0 metros.")
         }
+
+        @Test
+        fun `should calculate antipodal distance correctly without producing NaN`() {
+            val northPole = Coordinates(90.0, 0.0)
+            val southPole = Coordinates(-90.0, 0.0)
+
+            val distance = HaversineEngine.calculateDistanceMeters(northPole, southPole)
+
+            assertFalse(distance.isNaN(), "A distância calculada não deve ser NaN.")
+            assertTrue(distance.isFinite(), "A distância calculada deve ser finita.")
+            assertEquals(20015087.0, distance, 100.0, "A distância entre os polos deve ser aproximadamente 20.015 km.")
+        }
     }
 
     @Nested
