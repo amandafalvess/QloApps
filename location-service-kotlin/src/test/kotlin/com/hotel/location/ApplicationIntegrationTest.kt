@@ -57,11 +57,11 @@ class ApplicationIntegrationTest {
     }
 
     @Nested
-    @DisplayName("Cenários de Sucesso e Geofencing")
+    @DisplayName("Success and Geofencing Scenarios")
     inner class GeofencingScenarios {
 
         @Test
-        fun `deve responder 200 OK no healthcheck`() = testApplication {
+        fun `should respond 200 OK on healthcheck`() = testApplication {
             application { module() }
 
             val response = client.get("/healthz")
@@ -69,7 +69,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 200 OK para evento de localizacao valido`() = testApplication {
+        fun `should respond 200 OK for valid location event`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -89,7 +89,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 200 OK com NO_CHANGE e sem alerta quando hospede permanecer dentro do raio (inside para inside)`() = testApplication {
+        fun `should respond 200 OK with NO_CHANGE and no alert when guest remains inside radius (inside to inside)`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -109,7 +109,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 200 OK com EXITED e sem alerta quando hospede sair do raio (inside para outside)`() = testApplication {
+        fun `should respond 200 OK with EXITED and no alert when guest leaves radius (inside to outside)`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -136,11 +136,11 @@ class ApplicationIntegrationTest {
     }
 
     @Nested
-    @DisplayName("Cenários de Validação de Entrada e Erro")
+    @DisplayName("Input Validation and Error Scenarios")
     inner class InputValidationScenarios {
 
         @Test
-        fun `deve responder 400 Bad Request com RFC 7807 quando header X-Correlation-ID estiver ausente`() = testApplication {
+        fun `should respond 400 Bad Request with RFC 7807 when X-Correlation-ID header is missing`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -158,7 +158,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando coordenadas forem invalidas`() = testApplication {
+        fun `should respond 400 Bad Request when coordinates are invalid`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -180,7 +180,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando raio for invalido`() = testApplication {
+        fun `should respond 400 Bad Request when geofence radius is invalid`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -196,7 +196,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando previous_state for invalido`() = testApplication {
+        fun `should respond 400 Bad Request when previous_state is invalid`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -212,7 +212,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando geofence_radius_m for ausente`() = testApplication {
+        fun `should respond 400 Bad Request when geofence_radius_m is missing`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -228,7 +228,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando geofence_radius_m for nulo`() = testApplication {
+        fun `should respond 400 Bad Request when geofence_radius_m is null`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -244,7 +244,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando previous_state for ausente`() = testApplication {
+        fun `should respond 400 Bad Request when previous_state is missing`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -260,7 +260,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando previous_state for nulo`() = testApplication {
+        fun `should respond 400 Bad Request when previous_state is null`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -276,7 +276,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request para json malformado`() = testApplication {
+        fun `should respond 400 Bad Request for malformed json`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -293,7 +293,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 415 Unsupported Media Type quando header Content-Type estiver ausente`() = testApplication {
+        fun `should respond 415 Unsupported Media Type when Content-Type header is missing`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -309,7 +309,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 415 Unsupported Media Type quando Content-Type for diferente de application-json`() = testApplication {
+        fun `should respond 415 Unsupported Media Type when Content-Type is not application-json`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -326,7 +326,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 400 Bad Request quando header X-Correlation-ID tiver UUID invalido`() = testApplication {
+        fun `should respond 400 Bad Request when X-Correlation-ID header has invalid UUID`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -342,14 +342,32 @@ class ApplicationIntegrationTest {
             assertEquals(400, error.status)
             assertTrue(error.detail.contains("UUID"))
         }
+
+        @Test
+        fun `should respond 400 Bad Request when X-Correlation-ID is not a valid UUID v4`() = testApplication {
+            application { module() }
+
+            val response = client.post("/v1/location-events") {
+                header(HttpHeaders.ContentType, ContentType.Application.Json.toString())
+                header("X-Correlation-ID", "a1b2c3d4-e5f6-1a8b-9c0d-1e2f3a4b5c6d")
+                setBody(createLocationPayloadJson())
+            }
+
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            val error = json.decodeFromString<ProblemDetailsResponse>(response.bodyAsText())
+            assertEquals("urn:problem-type:invalid-header", error.type)
+            assertEquals("Invalid Header", error.title)
+            assertEquals(400, error.status)
+            assertTrue(error.detail.contains("UUID"))
+        }
     }
 
     @Nested
-    @DisplayName("Cenários de Resiliência e Simulação de Falhas")
+    @DisplayName("Resilience and Failure Simulation Scenarios")
     inner class ResilienceScenarios {
 
         @Test
-        fun `deve responder 503 Service Unavailable com RFC 7807 quando servico estiver indisponivel via flag`() = testApplication {
+        fun `should respond 503 Service Unavailable with RFC 7807 when service is unavailable via flag`() = testApplication {
             application { module() }
 
             isServiceAvailable = false
@@ -368,7 +386,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 503 Service Unavailable com RFC 7807 quando header X-Mock-Service-Unavailable estiver presente`() = testApplication {
+        fun `should respond 503 Service Unavailable with RFC 7807 when X-Mock-Service-Unavailable header is present`() = testApplication {
             application { module() }
 
             val response = client.post("/v1/location-events") {
@@ -386,7 +404,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve responder 503 Service Unavailable no healthcheck quando servico estiver indisponivel`() = testApplication {
+        fun `should respond 503 Service Unavailable on healthcheck when service is unavailable`() = testApplication {
             application { module() }
 
             isServiceAvailable = false
@@ -401,11 +419,11 @@ class ApplicationIntegrationTest {
     }
 
     @Nested
-    @DisplayName("Cenários de Observabilidade e Logs Estruturados")
+    @DisplayName("Observability and Structured Logging Scenarios")
     inner class ObservabilityScenarios {
 
         @Test
-        fun `deve registrar log estruturado JSON para evento GEOFENCE_EVALUATED`() = testApplication {
+        fun `should log structured JSON for GEOFENCE_EVALUATED event`() = testApplication {
             application { module() }
 
             val logbackLogger = LoggerFactory.getLogger("com.hotel.location.Application") as Logger
@@ -445,7 +463,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve registrar log estruturado JSON com evento GEOFENCE_VALIDATION_FAILED quando houver erro de validacao de coordenadas`() = testApplication {
+        fun `should log structured JSON with GEOFENCE_VALIDATION_FAILED event on coordinate validation error`() = testApplication {
             application { module() }
 
             val logbackLogger = LoggerFactory.getLogger("com.hotel.location.Application") as Logger
@@ -486,7 +504,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve registrar log estruturado JSON com evento GEOFENCE_SERVICE_UNAVAILABLE quando servico estiver simulado indisponivel`() = testApplication {
+        fun `should log structured JSON with GEOFENCE_SERVICE_UNAVAILABLE event when service is simulated unavailable`() = testApplication {
             application { module() }
 
             val logbackLogger = LoggerFactory.getLogger("com.hotel.location.Application") as Logger
@@ -522,7 +540,7 @@ class ApplicationIntegrationTest {
         }
 
         @Test
-        fun `deve registrar log estruturado JSON com evento MALFORMED_JSON_ERROR quando payload for malformado`() = testApplication {
+        fun `should log structured JSON with MALFORMED_JSON_ERROR event when payload is malformed`() = testApplication {
             application { module() }
 
             val logbackLogger = LoggerFactory.getLogger("com.hotel.location.Application") as Logger

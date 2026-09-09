@@ -22,11 +22,11 @@ import org.junit.jupiter.api.Test
 class HaversineEngineTest {
 
     @Nested
-    @DisplayName("Cálculo de Distância com Haversine")
+    @DisplayName("Haversine Distance Calculation")
     inner class DistanceCalculationTests {
 
         @Test
-        fun `deve calcular distancia aproximada de 108 metros para hospede proximo`() {
+        fun `should calculate approximate distance of 108 meters for nearby guest`() {
             val hotelLat = -8.052240
             val hotelLng = -34.885650
             val guestLat = -8.053100
@@ -38,7 +38,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve calcular distancia aproximada de 1500 metros para hospede distante`() {
+        fun `should calculate approximate distance of 1500 meters for distant guest`() {
             val hotelLat = -8.052240
             val hotelLng = -34.885650
             val guestLat = -8.065000
@@ -50,7 +50,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve retornar zero quando as coordenadas forem identicas`() {
+        fun `should return zero when coordinates are identical`() {
             val lat = -8.052240
             val lng = -34.885650
 
@@ -61,11 +61,11 @@ class HaversineEngineTest {
     }
 
     @Nested
-    @DisplayName("Validação de Coordenadas e Entidades")
+    @DisplayName("Coordinates and Entities Validation")
     inner class CoordinateValidationTests {
 
         @Test
-        fun `deve validar limites de coordenadas corretamente`() {
+        fun `should validate coordinate boundaries correctly`() {
             assertTrue(HaversineEngine.isValidLatitude(0.0))
             assertTrue(HaversineEngine.isValidLatitude(90.0))
             assertTrue(HaversineEngine.isValidLatitude(-90.0))
@@ -80,7 +80,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve lancar excecao ao instanciar coordenadas fora dos limites`() {
+        fun `should throw exception when instantiating coordinates out of bounds`() {
             assertThrows(InvalidCoordinatesException::class.java) {
                 Coordinates(95.0, 0.0)
             }
@@ -96,7 +96,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve lancar excecao quando raio for menor ou igual a zero`() {
+        fun `should throw exception when geofence radius is less than or equal to zero`() {
             assertThrows(InvalidGeofenceRadiusException::class.java) {
                 LocationEvent(
                     hotelId = "htl-01",
@@ -118,7 +118,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve lancar MissingFieldException quando hotelId for vazio ou conter apenas espacos no modelo`() {
+        fun `should throw MissingFieldException when hotelId is empty or blank in domain model`() {
             val exEmpty = assertThrows(MissingFieldException::class.java) {
                 LocationEvent(
                     hotelId = "",
@@ -144,7 +144,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve informar field correto ao falhar validacao de latitude ou longitude`() {
+        fun `should report correct field when latitude or longitude validation fails`() {
             val exLat = assertThrows(InvalidCoordinatesException::class.java) {
                 Coordinates(95.0, 0.0)
             }
@@ -158,11 +158,11 @@ class HaversineEngineTest {
     }
 
     @Nested
-    @DisplayName("Avaliação de Geofence e Transições de Estado")
+    @DisplayName("Geofence Evaluation and State Transitions")
     inner class GeofenceEvaluationTests {
 
         @Test
-        fun `deve acionar alerta com transicao ENTERED quando entrar no raio`() {
+        fun `should trigger alert with ENTERED transition when entering radius`() {
             val event = LocationEvent(
                 hotelId = "htl-01",
                 hotelLocation = Coordinates(-8.052240, -34.885650),
@@ -180,7 +180,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve retornar NO_CHANGE e sem alerta quando hospede estiver distante`() {
+        fun `should return NO_CHANGE and no alert when guest is distant`() {
             val event = LocationEvent(
                 hotelId = "htl-01",
                 hotelLocation = Coordinates(-8.052240, -34.885650),
@@ -197,7 +197,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve registrar transicao EXITED quando sair do raio`() {
+        fun `should record EXITED transition when leaving radius`() {
             val event = LocationEvent(
                 hotelId = "htl-01",
                 hotelLocation = Coordinates(-8.052240, -34.885650),
@@ -214,7 +214,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve retornar NO_CHANGE e sem alerta quando hospede permanecer dentro do raio (inside para inside)`() {
+        fun `should return NO_CHANGE and no alert when guest remains inside radius (inside to inside)`() {
             val event = LocationEvent(
                 hotelId = "htl-01",
                 hotelLocation = Coordinates(-8.052240, -34.885650),
@@ -232,7 +232,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve retornar NO_CHANGE e sem alerta quando coordenadas forem identicas e previous_state for inside`() {
+        fun `should return NO_CHANGE and no alert when coordinates are identical and previous_state is inside`() {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val event = LocationEvent(
                 hotelId = "htl-01",
@@ -251,7 +251,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve disparar alerta ENTERED quando coordenadas forem identicas e previous_state for outside`() {
+        fun `should trigger ENTERED alert when coordinates are identical and previous_state is outside`() {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val event = LocationEvent(
                 hotelId = "htl-01",
@@ -271,7 +271,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve parametrizar dinamicamente o raio na mensagem quando acionar alerta ENTERED`() {
+        fun `should dynamically parameterize radius in message when triggering ENTERED alert`() {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val guestCoords = Coordinates(-8.053100, -34.886100)
 
@@ -299,7 +299,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve considerar inside quando distancia for exatamente igual ao raio configurado`() {
+        fun `should consider inside when distance is exactly equal to configured radius`() {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val guestCoords = Coordinates(-8.053100, -34.886100)
             val calculatedDistance = HaversineEngine.calculateDistanceMeters(hotelCoords, guestCoords)
@@ -331,11 +331,11 @@ class HaversineEngineTest {
     }
 
     @Nested
-    @DisplayName("Observabilidade e Desempenho")
+    @DisplayName("Observability and Performance")
     inner class ObservabilityAndPerformanceTests {
 
         @Test
-        fun `deve gerar log estruturado com schema sem coordenadas de GPS`() {
+        fun `should generate structured log with schema without GPS coordinates`() {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val guestCoords = Coordinates(-8.053100, -34.886100)
             val event = LocationEvent(
@@ -368,7 +368,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `deve cumprir SLA de latencia P95 inferior a 10ms para calculo de haversine e avaliacao de geofence`() {
+        fun `should comply with P95 latency SLA under 10ms for haversine calculation and geofence evaluation`() {
             val hotelCoords = Coordinates(-8.052240, -34.885650)
             val guestCoords = Coordinates(-8.053100, -34.886100)
             val event = LocationEvent(
