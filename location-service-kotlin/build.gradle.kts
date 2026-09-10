@@ -23,6 +23,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
