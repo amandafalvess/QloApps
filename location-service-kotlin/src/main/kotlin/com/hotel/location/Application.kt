@@ -55,13 +55,34 @@ private fun extractFieldFromSerializationMessage(message: String?): String? {
     return null
 }
 
+private val problemJson = Json {
+    prettyPrint = true
+    isLenient = true
+    ignoreUnknownKeys = true
+}
+
+private val PROBLEM_DETAILS_CONTENT_TYPE = ContentType("application", "problem+json").withCharset(Charsets.UTF_8)
+
+private suspend fun ApplicationCall.respondProblem(
+    status: HttpStatusCode,
+    problem: ProblemDetailsResponse
+) {
+    respondText(
+        text = problemJson.encodeToString(problem),
+        contentType = PROBLEM_DETAILS_CONTENT_TYPE,
+        status = status
+    )
+}
+
 fun Application.module() {
     install(ContentNegotiation) {
-        json(Json {
+        val defaultJson = Json {
             prettyPrint = true
             isLenient = true
             ignoreUnknownKeys = true
-        })
+        }
+        json(defaultJson)
+        json(defaultJson, ContentType("application", "problem+json"))
     }
 
     install(StatusPages) {
@@ -80,7 +101,7 @@ fun Application.module() {
                 code = cause.errorCode.name
             )
             logger.warn(Json.encodeToString(errorLog))
-            call.respond(
+            call.respondProblem(
                 cause.statusCode,
                 ProblemDetailsResponse(
                     type = cause.typeUri,
@@ -114,7 +135,7 @@ fun Application.module() {
                 code = "MALFORMED_JSON"
             )
             logger.warn(Json.encodeToString(errorLog))
-            call.respond(
+            call.respondProblem(
                 HttpStatusCode.BadRequest,
                 ProblemDetailsResponse(
                     type = "urn:problem-type:malformed-json",
@@ -162,7 +183,7 @@ fun Application.module() {
                 code = code
             )
             logger.warn(Json.encodeToString(errorLog))
-            call.respond(
+            call.respondProblem(
                 HttpStatusCode.BadRequest,
                 ProblemDetailsResponse(
                     type = typeUri,
@@ -190,7 +211,7 @@ fun Application.module() {
                 code = cause.errorCode.name
             )
             logger.error(Json.encodeToString(errorLog))
-            call.respond(
+            call.respondProblem(
                 HttpStatusCode.ServiceUnavailable,
                 ProblemDetailsResponse(
                     type = cause.typeUri,
@@ -217,7 +238,7 @@ fun Application.module() {
                 code = "INTERNAL_SERVER_ERROR"
             )
             logger.error(Json.encodeToString(errorLog))
-            call.respond(
+            call.respondProblem(
                 HttpStatusCode.InternalServerError,
                 ProblemDetailsResponse(
                     type = "urn:problem-type:internal-server-error",

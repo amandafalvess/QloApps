@@ -416,6 +416,23 @@ class ApplicationIntegrationTest {
             assertEquals("location-service-kotlin", body.service)
             assertEquals(8104, body.port)
         }
+
+        @Test
+        fun `should respond with application problem json content type on error`() = testApplication {
+            application { module() }
+
+            val response = client.post("/v1/location-events") {
+                header("Content-Type", "application/json")
+                header("X-Correlation-ID", VALID_CORRELATION_ID)
+                setBody(createLocationPayloadJson(guestLat = 95.0))
+            }
+
+            assertEquals(HttpStatusCode.BadRequest, response.status)
+            val contentType = response.contentType()
+            assertNotNull(contentType)
+            assertEquals("application", contentType?.contentType)
+            assertEquals("problem+json", contentType?.contentSubtype)
+        }
     }
 
     @Nested
