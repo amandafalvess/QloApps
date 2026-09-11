@@ -28,6 +28,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.slf4j.LoggerFactory
+import org.slf4j.MDC
 
 fun main() {
     embeddedServer(Netty, port = 8104, host = "127.0.0.1", module = Application::module).start(wait = true)
@@ -302,8 +303,18 @@ fun Application.module() {
             val result = HaversineEngine.evaluate(domainEvent, correlationId)
             val durationMs = (System.nanoTime() - startTimeNano) / 1_000_000.0
 
-            val logEvent = result.toLog(durationMs)
-            logger.info(Json.encodeToString(logEvent))
+            try {
+                MDC.put("correlation_id", correlationId)
+                MDC.put("event", "GEOFENCE_EVALUATED")
+                MDC.put("hotel_id", result.hotelId)
+                MDC.put("distance_meters", result.distanceMeters.toString())
+                MDC.put("transition", result.transition.name)
+                MDC.put("duration_ms", "%.2f".format(java.util.Locale.US, durationMs))
+                MDC.put("timestamp", java.time.Instant.now().toString())
+                logger.info("GEOFENCE_EVALUATED")
+            } finally {
+                MDC.clear()
+            }
 
             call.respond(HttpStatusCode.OK, result.toDto())
         }

@@ -457,23 +457,25 @@ class ApplicationIntegrationTest {
 
                 assertEquals(HttpStatusCode.OK, response.status)
 
-                val logEvent = listAppender.list.firstOrNull { it.formattedMessage.contains("GEOFENCE_EVALUATED") }
+                val logEvent = listAppender.list.firstOrNull { 
+                    it.formattedMessage.contains("GEOFENCE_EVALUATED") || it.mdcPropertyMap["event"] == "GEOFENCE_EVALUATED" 
+                }
                 assertNotNull(logEvent, "Deveria ter registrado log com evento GEOFENCE_EVALUATED")
 
-                val jsonLog = json.parseToJsonElement(logEvent!!.formattedMessage).jsonObject
-                assertEquals("INFO", jsonLog["level"]?.jsonPrimitive?.content)
-                assertEquals(VALID_CORRELATION_ID, jsonLog["correlation_id"]?.jsonPrimitive?.content)
-                assertEquals("GEOFENCE_EVALUATED", jsonLog["event"]?.jsonPrimitive?.content)
-                assertEquals("htl-recife-01", jsonLog["hotel_id"]?.jsonPrimitive?.content)
-                assertEquals(107.7, jsonLog["distance_meters"]?.jsonPrimitive?.double)
-                assertEquals("ENTERED", jsonLog["transition"]?.jsonPrimitive?.content)
-                assertNotNull(jsonLog["duration_ms"]?.jsonPrimitive?.double)
-                assertNotNull(jsonLog["timestamp"]?.jsonPrimitive?.content)
+                val mdc = logEvent!!.mdcPropertyMap
+                assertEquals("INFO", logEvent.level.toString())
+                assertEquals(VALID_CORRELATION_ID, mdc["correlation_id"])
+                assertEquals("GEOFENCE_EVALUATED", mdc["event"])
+                assertEquals("htl-recife-01", mdc["hotel_id"])
+                assertEquals(107.7, mdc["distance_meters"]?.toDouble())
+                assertEquals("ENTERED", mdc["transition"])
+                assertNotNull(mdc["duration_ms"]?.toDouble())
+                assertNotNull(mdc["timestamp"])
 
-                assertFalse(jsonLog.containsKey("hotel_lat"))
-                assertFalse(jsonLog.containsKey("hotel_lng"))
-                assertFalse(jsonLog.containsKey("guest_lat"))
-                assertFalse(jsonLog.containsKey("guest_lng"))
+                assertFalse(mdc.containsKey("hotel_lat"))
+                assertFalse(mdc.containsKey("hotel_lng"))
+                assertFalse(mdc.containsKey("guest_lat"))
+                assertFalse(mdc.containsKey("guest_lng"))
             } finally {
                 logbackLogger.detachAppender(listAppender)
             }
