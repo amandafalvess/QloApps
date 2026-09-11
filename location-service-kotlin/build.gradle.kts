@@ -14,20 +14,17 @@ repositories {
 val ktorVersion = "2.3.12"
 
 dependencies {
-    // Ktor Server Core & Netty Engine
     implementation("io.ktor:ktor-server-core-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-netty-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-content-negotiation-jvm:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json-jvm:$ktorVersion")
     implementation("io.ktor:ktor-server-status-pages-jvm:$ktorVersion")
 
-    // Kotlinx Serialization JSON
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
-    // Logging
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
-    // Test dependencies (JUnit 5)
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.2")
     testImplementation("io.ktor:ktor-server-tests-jvm:$ktorVersion")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:1.9.24")
