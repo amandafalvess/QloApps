@@ -33,8 +33,6 @@ class AdminArrivalSharingController extends ModuleAdminController
             'arrivals'       => $arrivals,
             'totalArrivals'  => count($arrivals),
             'totalGuests'    => $totalGuests,
-            'hotelLat'       => -8.052240,
-            'hotelLng'       => -34.885650,
             'orderAdminLink' => $this->context->link->getAdminLink('AdminOrders', true),
         ));
 
