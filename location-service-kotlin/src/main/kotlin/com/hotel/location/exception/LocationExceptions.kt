@@ -59,37 +59,6 @@ class InvalidContentTypeException(contentType: String) : LocationValidationExcep
     errorCode = LocationErrorCode.UNSUPPORTED_MEDIA_TYPE
 )
 
-class InvalidCoordinatesException(detail: String, field: String = "coordinates") : LocationValidationException(
-    typeUri = "urn:problem-type:invalid-coordinates",
-    title = "Invalid Coordinates",
-    message = detail,
-    field = field,
-    errorCode = LocationErrorCode.INVALID_COORDINATES
-)
-
-class InvalidGeofenceRadiusException(radius: Double) : LocationValidationException(
-    typeUri = "urn:problem-type:invalid-radius",
-    title = "Invalid Geofence Radius",
-    message = "O raio da geocerca deve ser estritamente maior que zero (recebido: $radius).",
-    field = "geofence_radius_m",
-    errorCode = LocationErrorCode.INVALID_RADIUS
-)
-
-class InvalidGeofenceStateException(state: String) : LocationValidationException(
-    typeUri = "urn:problem-type:invalid-state",
-    title = "Invalid Geofence State",
-    message = "O estado '$state' é inválido. Valores aceitos: 'inside' ou 'outside'.",
-    field = "previous_state",
-    errorCode = LocationErrorCode.INVALID_STATE
-)
-
-class MissingFieldException(fieldName: String) : LocationValidationException(
-    typeUri = "urn:problem-type:invalid-payload",
-    title = "Invalid Payload",
-    message = "O campo '$fieldName' é obrigatório.",
-    field = fieldName,
-    errorCode = LocationErrorCode.MISSING_FIELD
-)
 
 class ServiceUnavailableException(
     detail: String = "O serviço de cálculo de geofencing está temporariamente indisponível."

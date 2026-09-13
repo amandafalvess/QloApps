@@ -6,10 +6,15 @@ import com.hotel.location.dto.LocationEventRequestDto
 import com.hotel.location.dto.ProblemDetailsResponse
 import com.hotel.location.dto.toDto
 import com.hotel.location.dto.toLog
+import com.hotel.location.exception.DomainException
 import com.hotel.location.exception.InvalidContentTypeException
+import com.hotel.location.exception.InvalidCoordinatesException
+import com.hotel.location.exception.InvalidGeofenceRadiusException
+import com.hotel.location.exception.InvalidGeofenceStateException
 import com.hotel.location.exception.InvalidHeaderException
 import com.hotel.location.exception.LocationValidationException
 import com.hotel.location.exception.MissingContentTypeException
+import com.hotel.location.exception.MissingFieldException
 import com.hotel.location.exception.MissingHeaderException
 import com.hotel.location.exception.ServiceUnavailableException
 import com.hotel.location.service.HaversineEngine
@@ -87,6 +92,41 @@ fun Application.module() {
     }
 
     install(StatusPages) {
+        exception<DomainException> { call, cause ->
+            val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
+            val (typeUri, title) = when (cause) {
+                is InvalidCoordinatesException -> "urn:problem-type:invalid-coordinates" to "Invalid Coordinates"
+                is InvalidGeofenceRadiusException -> "urn:problem-type:invalid-radius" to "Invalid Geofence Radius"
+                is InvalidGeofenceStateException -> "urn:problem-type:invalid-state" to "Invalid Geofence State"
+                is MissingFieldException -> "urn:problem-type:invalid-payload" to "Invalid Payload"
+                else -> "urn:problem-type:bad-request" to "Bad Request"
+            }
+            val errorLog = GeofenceErrorLog(
+                timestamp = java.time.Instant.now().toString(),
+                level = "WARN",
+                correlation_id = correlationId,
+                event = "GEOFENCE_VALIDATION_FAILED",
+                error_type = typeUri,
+                status_code = HttpStatusCode.BadRequest.value,
+                path = call.request.path(),
+                message = cause.message,
+                field = cause.field,
+                code = cause.errorCode.name
+            )
+            logger.warn(Json.encodeToString(errorLog))
+            call.respondProblem(
+                HttpStatusCode.BadRequest,
+                ProblemDetailsResponse(
+                    type = typeUri,
+                    title = title,
+                    status = HttpStatusCode.BadRequest.value,
+                    detail = cause.message,
+                    instance = call.request.path(),
+                    code = cause.errorCode.name
+                )
+            )
+        }
+
         exception<LocationValidationException> { call, cause ->
             val correlationId = call.request.headers["X-Correlation-ID"] ?: "none"
             val errorLog = GeofenceErrorLog(
