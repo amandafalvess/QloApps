@@ -4,6 +4,8 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+require_once dirname(__FILE__) . '/../../classes/ArrivalBookingRepository.php';
+
 class AdminArrivalSharingController extends ModuleAdminController
 {
     public function __construct()
@@ -18,11 +20,22 @@ class AdminArrivalSharingController extends ModuleAdminController
     {
         parent::initContent();
 
+        $today = date('Y-m-d');
+        $arrivals = ArrivalBookingRepository::getTodayArrivals($today);
+
+        $totalGuests = 0;
+        foreach ($arrivals as $arrival) {
+            $totalGuests += (int) $arrival['total_guests'];
+        }
+
         $this->context->smarty->assign(array(
-            'module_name' => $this->module->displayName,
-            'module_desc' => $this->module->description,
-            'hotelLat'    => -8.052240,
-            'hotelLng'    => -34.885650,
+            'currentDate'    => Tools::displayDate($today),
+            'arrivals'       => $arrivals,
+            'totalArrivals'  => count($arrivals),
+            'totalGuests'    => $totalGuests,
+            'hotelLat'       => -8.052240,
+            'hotelLng'       => -34.885650,
+            'orderAdminLink' => $this->context->link->getAdminLink('AdminOrders', true),
         ));
 
         $this->setTemplate('reception_dashboard.tpl');
