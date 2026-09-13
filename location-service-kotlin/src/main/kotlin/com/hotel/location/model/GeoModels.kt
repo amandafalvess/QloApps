@@ -49,7 +49,7 @@ data class LocationEvent(
         if (hotelId.isNullOrBlank()) {
             throw MissingFieldException("hotel_id")
         }
-        if (!geofenceRadiusMeters.isFinite() || geofenceRadiusMeters <= 0.0) {
+        if (!geofenceRadiusMeters.isFinite() || geofenceRadiusMeters <= 1.0) {
             throw InvalidGeofenceRadiusException(geofenceRadiusMeters)
         }
     }

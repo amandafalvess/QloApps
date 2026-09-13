@@ -70,7 +70,7 @@ class InvalidCoordinatesException(detail: String, field: String = "coordinates")
 class InvalidGeofenceRadiusException(radius: Double) : LocationValidationException(
     typeUri = "urn:problem-type:invalid-radius",
     title = "Invalid Geofence Radius",
-    message = "O raio da geocerca deve ser estritamente maior que zero (recebido: $radius).",
+    message = "O raio da geocerca deve ser estritamente maior que 1 metro (recebido: $radius).",
     field = "geofence_radius_m",
     errorCode = LocationErrorCode.INVALID_RADIUS
 )

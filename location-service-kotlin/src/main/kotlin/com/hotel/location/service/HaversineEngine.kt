@@ -76,7 +76,7 @@ object HaversineEngine {
     }
 
     fun processLocationEvent(req: LocationEventRequest, correlationId: String): LocationEventResponse {
-        val radius = if (req.geofence_radius_m <= 0.0) 200.0 else req.geofence_radius_m
+        val radius = if (req.geofence_radius_m <= 1.0) 200.0 else req.geofence_radius_m
         val distance = calculateDistanceMeters(req.hotel_lat, req.hotel_lng, req.guest_lat, req.guest_lng)
         val roundedDistance = (distance * 10.0).roundToInt() / 10.0
 
