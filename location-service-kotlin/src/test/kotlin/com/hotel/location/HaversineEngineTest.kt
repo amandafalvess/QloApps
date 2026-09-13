@@ -364,6 +364,25 @@ class HaversineEngineTest {
             assertEquals(GeofenceTransition.ENTERED, result.transition)
             assertTrue(result.alertTriggered)
         }
+
+        @Test
+        fun `should allow custom message override when evaluating geofence event`() {
+            val hotelCoords = Coordinates(-8.052240, -34.885650)
+            val guestCoords = Coordinates(-8.053100, -34.886100)
+            val event = LocationEvent(
+                hotelId = "htl-01",
+                hotelLocation = hotelCoords,
+                guestLocation = guestCoords,
+                geofenceRadiusMeters = 200.0,
+                previousState = GeofenceState.OUTSIDE
+            )
+
+            val customText = "Guest entered the 200m area."
+            val result = HaversineEngine.evaluate(event, "test-corr-custom-msg", customMessage = customText)
+
+            assertEquals(customText, result.message)
+            assertTrue(result.alertTriggered)
+        }
     }
 
     @Nested

@@ -27,7 +27,24 @@ object HaversineEngine {
         return calculateDistanceMeters(c1.latitude, c1.longitude, c2.latitude, c2.longitude)
     }
 
-    fun evaluate(event: LocationEvent, correlationId: String): GeofenceEvaluationResult {
+    fun buildDefaultMessage(alertTriggered: Boolean, radiusMeters: Double): String {
+        val radiusLabel = if (radiusMeters % 1.0 == 0.0) {
+            "${radiusMeters.toInt()}m"
+        } else {
+            "${radiusMeters}m"
+        }
+        return if (alertTriggered) {
+            "Hóspede entrou no raio de $radiusLabel da propriedade."
+        } else {
+            "Posição atualizada sem alerta."
+        }
+    }
+
+    fun evaluate(
+        event: LocationEvent,
+        correlationId: String,
+        customMessage: String? = null
+    ): GeofenceEvaluationResult {
         val distance = calculateDistanceMeters(event.hotelLocation, event.guestLocation)
         val roundedDistance = (distance * 10.0).roundToInt() / 10.0
 
@@ -44,16 +61,7 @@ object HaversineEngine {
         }
 
         val alertTriggered = (transition == GeofenceTransition.ENTERED)
-        val radiusLabel = if (event.geofenceRadiusMeters % 1.0 == 0.0) {
-            "${event.geofenceRadiusMeters.toInt()}m"
-        } else {
-            "${event.geofenceRadiusMeters}m"
-        }
-        val message = if (alertTriggered) {
-            "Hóspede entrou no raio de $radiusLabel da propriedade."
-        } else {
-            "Posição atualizada sem alerta."
-        }
+        val message = customMessage ?: buildDefaultMessage(alertTriggered, event.geofenceRadiusMeters)
 
         return GeofenceEvaluationResult(
             correlationId = correlationId,
