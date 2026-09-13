@@ -21,7 +21,8 @@ class AdminArrivalSharingController extends ModuleAdminController
         parent::initContent();
 
         $today = date('Y-m-d');
-        $arrivals = ArrivalBookingRepository::getTodayArrivals($today);
+        $idHotel = (int) Tools::getValue('id_hotel', (isset($this->context->cookie->id_hotel) ? $this->context->cookie->id_hotel : 0));
+        $arrivals = ArrivalBookingRepository::getTodayArrivals($today, $idHotel ?: null);
 
         $totalGuests = 0;
         foreach ($arrivals as $arrival) {
