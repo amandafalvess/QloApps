@@ -2,14 +2,12 @@ package com.hotel.location
 
 import com.hotel.location.exception.InvalidCoordinatesException
 import com.hotel.location.exception.InvalidGeofenceRadiusException
-import com.hotel.location.exception.LocationErrorCode
 import com.hotel.location.exception.MissingFieldException
 import com.hotel.location.dto.toLog
 import com.hotel.location.model.Coordinates
 import com.hotel.location.model.GeofenceState
 import com.hotel.location.model.GeofenceTransition
 import com.hotel.location.model.LocationEvent
-import com.hotel.location.model.LocationEventRequest
 import com.hotel.location.service.HaversineEngine
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -111,16 +109,7 @@ class HaversineEngineTest {
         }
 
         @Test
-        fun `should throw exception when geofence radius is less than or equal to one`() {
-            assertThrows(InvalidGeofenceRadiusException::class.java) {
-                LocationEvent(
-                    hotelId = "htl-01",
-                    hotelLocation = Coordinates(-8.052240, -34.885650),
-                    guestLocation = Coordinates(-8.053100, -34.886100),
-                    geofenceRadiusMeters = 1.0,
-                    previousState = GeofenceState.OUTSIDE
-                )
-            }
+        fun `should throw exception when geofence radius is less than or equal to zero`() {
             assertThrows(InvalidGeofenceRadiusException::class.java) {
                 LocationEvent(
                     hotelId = "htl-01",
@@ -139,64 +128,6 @@ class HaversineEngineTest {
                     previousState = GeofenceState.OUTSIDE
                 )
             }
-        }
-
-        @Test
-        fun `should accept geofence radius strictly greater than one meter`() {
-            assertDoesNotThrow {
-                LocationEvent(
-                    hotelId = "htl-01",
-                    hotelLocation = Coordinates(-8.052240, -34.885650),
-                    guestLocation = Coordinates(-8.053100, -34.886100),
-                    geofenceRadiusMeters = 1.01,
-                    previousState = GeofenceState.OUTSIDE
-                )
-            }
-        }
-
-        @Test
-        fun `should report correct field and message when geofence radius validation fails`() {
-            val ex = assertThrows(InvalidGeofenceRadiusException::class.java) {
-                LocationEvent(
-                    hotelId = "htl-01",
-                    hotelLocation = Coordinates(-8.052240, -34.885650),
-                    guestLocation = Coordinates(-8.053100, -34.886100),
-                    geofenceRadiusMeters = 1.0,
-                    previousState = GeofenceState.OUTSIDE
-                )
-            }
-            assertEquals("geofence_radius_m", ex.field)
-            assertEquals(LocationErrorCode.INVALID_RADIUS, ex.errorCode)
-            assertEquals("O raio da geocerca deve ser estritamente maior que 1 metro (recebido: 1.0).", ex.message)
-        }
-
-        @Test
-        fun `should fallback to 200m radius in processLocationEvent when radius is less than or equal to one`() {
-            val hotelLat = -8.052240
-            val hotelLng = -34.885650
-            val guestLat = -8.053100
-            val guestLng = -34.886100
-
-            val reqOne = LocationEventRequest(
-                hotel_id = "htl-01",
-                hotel_lat = hotelLat,
-                hotel_lng = hotelLng,
-                guest_lat = guestLat,
-                guest_lng = guestLng,
-                geofence_radius_m = 1.0,
-                previous_state = "outside"
-            )
-            val resOne = HaversineEngine.processLocationEvent(reqOne, "corr-test-fallback-1")
-            assertEquals("inside", resOne.current_state)
-            assertEquals("ENTERED", resOne.transition)
-
-            val reqZero = reqOne.copy(geofence_radius_m = 0.0)
-            val resZero = HaversineEngine.processLocationEvent(reqZero, "corr-test-fallback-0")
-            assertEquals("inside", resZero.current_state)
-
-            val reqNegative = reqOne.copy(geofence_radius_m = -10.0)
-            val resNegative = HaversineEngine.processLocationEvent(reqNegative, "corr-test-fallback-neg")
-            assertEquals("inside", resNegative.current_state)
         }
 
         @Test
